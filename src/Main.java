@@ -41,7 +41,7 @@ public class Main {
                 Новый шаблон:\040""");
             test_obj_custom_date.set_new_date_format(main_inp_scan.next());
 
-            System.out.println(test_obj_custom_date.get_date_string_in_format());
+            System.out.printf("Тест вывода даты во введенном формате: %s", test_obj_custom_date.get_date_string_in_format());
         }
 
     }

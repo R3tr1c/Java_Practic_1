@@ -77,38 +77,20 @@ public class Custom_date {
         System.out.printf("Месяц: %d\nГод: %d\n", parted_date[1], parted_date[2]);
         show_is_leap_year();
     }
-
+    //функционал класса
     public void set_new_date_format(String input_format){
         check_input_format(input_format);
         date_format = input_format;
     }
-
+    //функционал класса
     public String get_date_string_in_format () {
         String compiled_date_in_format = date_format;
         StringBuilder buff_str = new StringBuilder();
-        int count_day_symbols = count_format_symbols(date_format, 'd'),
-                count_month_num_symbols = count_format_symbols(date_format, 'm'),
-                count_month_txt_symbols = count_format_symbols(date_format, 'l'),
-                count_year_num_symbols  = count_format_symbols(date_format, 'y');
+        int count_month_txt_symbols = count_format_symbols(date_format, 'l'),
+            count_year_num_symbols  = count_format_symbols(date_format, 'y');
 
-
-        if (date_format.contains("d")){
-            buff_str.append(parted_date[0]);
-            while (buff_str.length() < count_day_symbols){
-                buff_str.insert(0, "0");
-            }
-            compiled_date_in_format = compiled_date_in_format.replace( compiled_date_in_format.substring(compiled_date_in_format.indexOf('d'), compiled_date_in_format.lastIndexOf('d') + 1), buff_str.toString());
-            buff_str = new StringBuilder();
-        }
-
-        if (date_format.contains("m")){
-            buff_str.append(parted_date[1]);
-            while (buff_str.length() < count_month_num_symbols){
-                buff_str.insert(0, "0");
-            }
-            compiled_date_in_format =  compiled_date_in_format.replace( compiled_date_in_format.substring(compiled_date_in_format.indexOf('m'), compiled_date_in_format.lastIndexOf('m') + 1), buff_str.toString());
-            buff_str = new StringBuilder();
-        }
+        compiled_date_in_format = add_day_n_month_output(compiled_date_in_format, "d");
+        compiled_date_in_format = add_day_n_month_output(compiled_date_in_format, "m");
 
         if (date_format.contains("l")){
             if (count_month_txt_symbols > month_text[parted_date[1] - 1].length()) count_month_txt_symbols = month_text[parted_date[1] - 1].length();
@@ -134,7 +116,6 @@ public class Custom_date {
             compiled_date_in_format =  compiled_date_in_format.replace( compiled_date_in_format.substring(compiled_date_in_format.indexOf('y'), compiled_date_in_format.lastIndexOf('y') + 1), buff_str.toString());
 
         }
-
         return compiled_date_in_format;
     }
 
@@ -196,8 +177,11 @@ public class Custom_date {
     private boolean leap_year_check(int checking_year) {
         return checking_year % 4 == 0 && (checking_year % 400 == 0 || checking_year % 100 != 0);
     }
+
     //побочный комплексный
     private void check_input_format (String format_to_check) {
+        //Проверить отсутствие разделителей
+        check_illegal_format_delims(format_to_check);
         //Проверить неучтенные символы
         check_illegal_format_content(format_to_check);
         //Проверить двузначность дня месяца при формате в однозначный
@@ -207,25 +191,38 @@ public class Custom_date {
         //Проверить однозначность года при формате в длину меньше четырехназначной + запрос года длиной 1 символ
         check_illegal_year_format(format_to_check);
     }
-    private void check_illegal_format_content(String format_to_check) throws CustomDateIllegalFormatInput{
-           if (!(format_to_check.contains(".") || format_to_check.contains("/") ||
-                 format_to_check.contains("\\") || format_to_check.contains("-") || format_to_check.contains("_"))){
+    //побочный
+    private void check_illegal_format_delims(String format_to_check) throws CustomDateIllegalFormatInput{
+        if (((format_to_check.contains("d") && (format_to_check.contains("m") || format_to_check.contains("l") || format_to_check.contains("y"))) ||
+                (format_to_check.contains("m") && (format_to_check.contains("d") || format_to_check.contains("l") || format_to_check.contains("y"))) ||
+                (format_to_check.contains("l") && (format_to_check.contains("m") || format_to_check.contains("d") || format_to_check.contains("y"))) ||
+                (format_to_check.contains("y") && (format_to_check.contains("m") || format_to_check.contains("l") || format_to_check.contains("d")))) &&
+                (!(format_to_check.contains(".") || format_to_check.contains("/") || format_to_check.contains("\\") || format_to_check.contains("-") || format_to_check.contains("_")))) {
                throw new CustomDateIllegalFormatInput("Ошибка введенного формата: отсутствуют разрешенные разделители!");
            }
     }
+    //побочный
+    private void check_illegal_format_content(String format_to_check) throws CustomDateIllegalFormatInput{
+        for (int i = 0; i < format_to_check.length(); i++)
+            if (format_to_check.charAt(i) != 'd' || format_to_check.charAt(i) != 'm' || format_to_check.charAt(i) != 'l' || format_to_check.charAt(i) != 'y' ||
+                    format_to_check.charAt(i) != '.' || format_to_check.charAt(i) != '/' || format_to_check.charAt(i) != '\\' || format_to_check.charAt(i) != '-' )
+                throw new CustomDateIllegalFormatInput("Ошибка введенного формата: присутствуют неучтенные символы!");
+    }
+    //побочный
     private void check_illegal_day_format(String format_to_check) throws CustomDateIllegalFormatInput{
         int count_day_symbols_in_format = count_format_symbols(format_to_check, 'd');
         if (Integer.toString(parted_date[0]).length() > 1 && count_day_symbols_in_format == 1)
             throw new CustomDateIllegalFormatInput("Ошибка введенного формата: потеря репрезентативности номера дня месяца!");
     }
-
+    //побочный
     private void check_illegal_month_format(String format_to_check) throws CustomDateIllegalFormatInput{
         int count_month_num_symbols_in_format = count_format_symbols(format_to_check, 'm'),
             count_month_txt_symbols_in_format = count_format_symbols(format_to_check, 'l');
-        if ((Integer.toString(parted_date[1]).length() > 1 && count_month_num_symbols_in_format == 1) || (count_month_txt_symbols_in_format < 3 && count_month_txt_symbols_in_format > 0) )
+        if ((Integer.toString(parted_date[1]).length() > 1 && count_month_num_symbols_in_format == 1) ||
+            (count_month_txt_symbols_in_format < 3 && count_month_txt_symbols_in_format > 0) )
             throw new CustomDateIllegalFormatInput("Ошибка введенного формата: потеря репрезентативности месяца!");
     }
-
+    //побочный
     private void check_illegal_year_format(String format_to_check) throws CustomDateIllegalFormatInput{
         int count_year_symbols_in_format = count_format_symbols(format_to_check, 'y');
         if (Integer.toString(parted_date[2]).length() > 1 && (count_year_symbols_in_format == 1 ||
@@ -233,12 +230,28 @@ public class Custom_date {
             (count_year_symbols_in_format == 3 && parted_date[2] / 1000 > 0) ))
             throw new CustomDateIllegalFormatInput("Ошибка введенного формата: потеря репрезентативности номера года!");
     }
-
+    //побочный
     private int count_format_symbols(String format_to_count, char counting_symbol){
         int symbols_count = 0;
         for(char str_char : format_to_count.toCharArray())
             if (str_char == counting_symbol) symbols_count++;
         return symbols_count;
+    }
+    //побочный повторяемый
+    private String add_day_n_month_output(String compiled_date_in_format, String date_part_type){
+        int count_day_symbols = count_format_symbols(date_format, date_part_type.charAt(0));
+        StringBuilder buff_str = new StringBuilder();
+        int i = 0;
+        if (date_part_type.equals("m")) i = 1;
+        if (date_format.contains(date_part_type)){
+            buff_str.append(parted_date[i]);
+            while (buff_str.length() < count_day_symbols){
+                buff_str.insert(0, "0");
+            }
+            compiled_date_in_format = compiled_date_in_format.replace( compiled_date_in_format.substring(compiled_date_in_format.indexOf(date_part_type),
+                                                                       compiled_date_in_format.lastIndexOf(date_part_type) + 1), buff_str.toString());
+        }
+        return compiled_date_in_format;
     }
 }
 
