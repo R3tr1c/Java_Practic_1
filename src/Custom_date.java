@@ -6,6 +6,7 @@ public class Custom_date {
     public Custom_date(String input_date_value){
         check_string_correct_date(input_date_value);
         parted_date = string_date_partition(input_date_value);
+        date_format = "dd.mm.yyyy";
     }
 
     //функционал класса
@@ -77,8 +78,21 @@ public class Custom_date {
         show_is_leap_year();
     }
 
+    public void set_new_date_format(String input_format){
+        //Добавить проверки корректность формата и доступность для обрабатываемой даты
+        check_input_format(input_format);
+        date_format = input_format;
+    }
+
+    public String get_date_string_in_format () {
+
+        return new String("");
+    }
+
     //хранилище для даты
     private int[] parted_date;
+
+    private String date_format;
 
     //побочный комплексный
     private void check_string_correct_date(String value_to_check) {
@@ -118,12 +132,52 @@ public class Custom_date {
     private boolean leap_year_check(int checking_year) {
         return checking_year % 4 == 0 && (checking_year % 400 == 0 || checking_year % 100 != 0);
     }
+    //побочный комплексный
+    private void check_input_format (String format_to_check) {
+        //Проверить неучтенные символы
+        check_illegal_format_content(format_to_check);
+        //Проверить двузначность дня месяца при формате в однозначный
+        check_illegal_day_format(format_to_check);
+        //Проверить конвертацию номера месяца в однозначную + трехзначного и более текста месяца
+        check_illegal_month_format(format_to_check);
+        //Проверить однозначность года при формате в длину меньше четырехназначной + запрос года длиной 1 символ
+        check_illegal_year_format(format_to_check);
+    }
+    private void check_illegal_format_content(String format_to_check) throws CustomDateIllegalFormatInput{
+           if (!(format_to_check.contains(".") || format_to_check.contains("/") ||
+                 format_to_check.contains("\\") || format_to_check.contains("-") ||
+                 format_to_check.contains(" "))){
+               throw new CustomDateIllegalFormatInput("Ошибка введенного формата: отсутствуют разрешенные разделители!");
+           }
+    }
+    private void check_illegal_day_format(String format_to_check) throws CustomDateIllegalFormatInput{
+        int count_day_symbols_in_format = 0;
+        for(char str_char : format_to_check.toCharArray()){
+            if (str_char == 'd') count_day_symbols_in_format++;
+        }
+        if (Integer.toString(parted_date[0]).length() > 1 && count_day_symbols_in_format == 1)
+            throw new CustomDateIllegalFormatInput("Ошибка введенного формата: потеря репрезентативности номера дня месяца!");
+    }
 
+    private void check_illegal_month_format(String format_to_check) throws CustomDateIllegalFormatInput{
+        int count_month_num_symbols_in_format = 0,
+            count_month_txt_symbols_in_format = 0;
+        for(char str_char : format_to_check.toCharArray()){
+            if (str_char == 'm') count_month_num_symbols_in_format++;
+            if (str_char == 'l') count_month_txt_symbols_in_format++;
+        }
+        if ((Integer.toString(parted_date[1]).length() > 1 && count_month_num_symbols_in_format == 1) || (count_month_txt_symbols_in_format < 3) )
+            throw new CustomDateIllegalFormatInput("Ошибка введенного формата: потеря репрезентативности месяца!");
+    }
 
-
-
-
-
+    private void check_illegal_year_format(String format_to_check) throws CustomDateIllegalFormatInput{
+        int count_year_symbols_in_format = 0;
+        for(char str_char :  format_to_check.toCharArray() )
+            if (str_char == 'y') count_year_symbols_in_format++;
+        if (Integer.toString(parted_date[2]).length() > 1 && (count_year_symbols_in_format == 1 || (count_year_symbols_in_format == 2 && (parted_date[2] / 1000 > 0 || parted_date[2] / 100 > 0 ) && !(parted_date[2] / 1000 == 2) ) || (count_year_symbols_in_format == 3 && parted_date[2] / 1000 > 0) ))
+            throw new CustomDateIllegalFormatInput("Ошибка введенного формата: потеря репрезентативности номера года!");
+    }
 
 }
+
 
