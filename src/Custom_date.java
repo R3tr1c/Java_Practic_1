@@ -79,18 +79,81 @@ public class Custom_date {
     }
 
     public void set_new_date_format(String input_format){
-        //Добавить проверки корректность формата и доступность для обрабатываемой даты
         check_input_format(input_format);
         date_format = input_format;
     }
 
     public String get_date_string_in_format () {
+        String compiled_date_in_format = date_format;
+        StringBuilder buff_str = new StringBuilder();
+        int count_day_symbols = count_format_symbols(date_format, 'd'),
+                count_month_num_symbols = count_format_symbols(date_format, 'm'),
+                count_month_txt_symbols = count_format_symbols(date_format, 'l'),
+                count_year_num_symbols  = count_format_symbols(date_format, 'y');
 
-        return new String("");
+
+        if (date_format.contains("d")){
+            buff_str.append(parted_date[0]);
+            while (buff_str.length() < count_day_symbols){
+                buff_str.insert(0, "0");
+            }
+            compiled_date_in_format = compiled_date_in_format.replace( compiled_date_in_format.substring(compiled_date_in_format.indexOf('d'), compiled_date_in_format.lastIndexOf('d') + 1), buff_str.toString());
+            buff_str = new StringBuilder();
+        }
+
+        if (date_format.contains("m")){
+            buff_str.append(parted_date[1]);
+            while (buff_str.length() < count_month_num_symbols){
+                buff_str.insert(0, "0");
+            }
+            compiled_date_in_format =  compiled_date_in_format.replace( compiled_date_in_format.substring(compiled_date_in_format.indexOf('m'), compiled_date_in_format.lastIndexOf('m') + 1), buff_str.toString());
+            buff_str = new StringBuilder();
+        }
+
+        if (date_format.contains("l")){
+            if (count_month_txt_symbols > month_text[parted_date[1] - 1].length()) count_month_txt_symbols = month_text[parted_date[1] - 1].length();
+            buff_str = new StringBuilder(month_text[parted_date[1] - 1].substring(0, count_month_txt_symbols));
+            compiled_date_in_format =  compiled_date_in_format.replace(compiled_date_in_format.substring(compiled_date_in_format.indexOf('l'), compiled_date_in_format.lastIndexOf('l') + 1), buff_str.toString());
+            buff_str = new StringBuilder();
+        }
+
+        if (date_format.contains("y")){
+            if (count_year_num_symbols > Integer.toString(parted_date[2]).length()){
+                buff_str.append(parted_date[2]);
+                while (buff_str.length() < count_year_num_symbols){
+                    buff_str.insert(0, "0");
+                }
+            }
+            else if (count_year_num_symbols < Integer.toString(parted_date[2]).length()){
+                for (int i = Integer.toString(parted_date[2]).length() - 1; i >= count_year_num_symbols; i-- ){
+                    buff_str.insert(0, Integer.toString(parted_date[2]).charAt(i));
+                }
+            }
+            else buff_str = new StringBuilder(Integer.toString(parted_date[2]));
+
+            compiled_date_in_format =  compiled_date_in_format.replace( compiled_date_in_format.substring(compiled_date_in_format.indexOf('y'), compiled_date_in_format.lastIndexOf('y') + 1), buff_str.toString());
+
+        }
+
+        return compiled_date_in_format;
     }
 
     //хранилище для даты
     private int[] parted_date;
+
+    //тексты месяцев
+    private final String[] month_text = { "Января",
+                                          "Февраля",
+                                          "Марта",
+                                          "Апреля",
+                                          "Мая",
+                                          "Июня",
+                                          "Июля",
+                                          "Августа",
+                                          "Сентября",
+                                          "Октября",
+                                          "Ноября",
+                                          "Декабря"};
 
     private String date_format;
 
@@ -114,7 +177,8 @@ public class Custom_date {
     //побочный с повторяемой составляющей
     private void check_date_is_legal(String value_to_check) throws CustomDateIllegalInput {
         int[] parted_date = string_date_partition(value_to_check);
-        if (!(((parted_date[0] > 0 && parted_date[0] < 32) && (parted_date[1] > 0 && parted_date[1] < 13)) && (parted_date[1] != 2 || parted_date[0] != 29 || leap_year_check(parted_date[2])))){
+        if (!(((parted_date[0] > 0 && parted_date[0] < 32) && (parted_date[1] > 0 && parted_date[1] < 13)) &&
+              (parted_date[1] != 2 || parted_date[0] != 29 || leap_year_check(parted_date[2])))){
             throw new CustomDateIllegalInput("Ошибка ввода даты: введенной даты не существует.");
         }
     }
@@ -145,39 +209,37 @@ public class Custom_date {
     }
     private void check_illegal_format_content(String format_to_check) throws CustomDateIllegalFormatInput{
            if (!(format_to_check.contains(".") || format_to_check.contains("/") ||
-                 format_to_check.contains("\\") || format_to_check.contains("-") ||
-                 format_to_check.contains(" "))){
+                 format_to_check.contains("\\") || format_to_check.contains("-") || format_to_check.contains("_"))){
                throw new CustomDateIllegalFormatInput("Ошибка введенного формата: отсутствуют разрешенные разделители!");
            }
     }
     private void check_illegal_day_format(String format_to_check) throws CustomDateIllegalFormatInput{
-        int count_day_symbols_in_format = 0;
-        for(char str_char : format_to_check.toCharArray()){
-            if (str_char == 'd') count_day_symbols_in_format++;
-        }
+        int count_day_symbols_in_format = count_format_symbols(format_to_check, 'd');
         if (Integer.toString(parted_date[0]).length() > 1 && count_day_symbols_in_format == 1)
             throw new CustomDateIllegalFormatInput("Ошибка введенного формата: потеря репрезентативности номера дня месяца!");
     }
 
     private void check_illegal_month_format(String format_to_check) throws CustomDateIllegalFormatInput{
-        int count_month_num_symbols_in_format = 0,
-            count_month_txt_symbols_in_format = 0;
-        for(char str_char : format_to_check.toCharArray()){
-            if (str_char == 'm') count_month_num_symbols_in_format++;
-            if (str_char == 'l') count_month_txt_symbols_in_format++;
-        }
-        if ((Integer.toString(parted_date[1]).length() > 1 && count_month_num_symbols_in_format == 1) || (count_month_txt_symbols_in_format < 3) )
+        int count_month_num_symbols_in_format = count_format_symbols(format_to_check, 'm'),
+            count_month_txt_symbols_in_format = count_format_symbols(format_to_check, 'l');
+        if ((Integer.toString(parted_date[1]).length() > 1 && count_month_num_symbols_in_format == 1) || (count_month_txt_symbols_in_format < 3 && count_month_txt_symbols_in_format > 0) )
             throw new CustomDateIllegalFormatInput("Ошибка введенного формата: потеря репрезентативности месяца!");
     }
 
     private void check_illegal_year_format(String format_to_check) throws CustomDateIllegalFormatInput{
-        int count_year_symbols_in_format = 0;
-        for(char str_char :  format_to_check.toCharArray() )
-            if (str_char == 'y') count_year_symbols_in_format++;
-        if (Integer.toString(parted_date[2]).length() > 1 && (count_year_symbols_in_format == 1 || (count_year_symbols_in_format == 2 && (parted_date[2] / 1000 > 0 || parted_date[2] / 100 > 0 ) && !(parted_date[2] / 1000 == 2) ) || (count_year_symbols_in_format == 3 && parted_date[2] / 1000 > 0) ))
+        int count_year_symbols_in_format = count_format_symbols(format_to_check, 'y');
+        if (Integer.toString(parted_date[2]).length() > 1 && (count_year_symbols_in_format == 1 ||
+            (count_year_symbols_in_format == 2 && (parted_date[2] / 1000 > 0 || parted_date[2] / 100 > 0 ) && !(parted_date[2] / 1000 == 2) ) ||
+            (count_year_symbols_in_format == 3 && parted_date[2] / 1000 > 0) ))
             throw new CustomDateIllegalFormatInput("Ошибка введенного формата: потеря репрезентативности номера года!");
     }
 
+    private int count_format_symbols(String format_to_count, char counting_symbol){
+        int symbols_count = 0;
+        for(char str_char : format_to_count.toCharArray())
+            if (str_char == counting_symbol) symbols_count++;
+        return symbols_count;
+    }
 }
 
 
